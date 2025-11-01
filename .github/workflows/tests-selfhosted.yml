@@ -36,7 +36,7 @@ jobs:
       - name: Ensure workspace ownership
         run: |
           echo "Workflow triggered by ${{ github.event_name }}"
-          echo "chown -R $USER $GITHUB_WORKSPACE" && sudo chown -R $USER $GITHUB_WORKSPACE
+          sudo chown -R "$USER" "$GITHUB_WORKSPACE"
 
       # https://github.com/actions/checkout/issues/1781
       - name: Check out code
