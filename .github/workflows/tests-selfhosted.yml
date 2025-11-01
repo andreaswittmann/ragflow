@@ -36,14 +36,7 @@ jobs:
       - name: Ensure workspace ownership
         run: |
           echo "Workflow triggered by ${{ github.event_name }}"
-          # Debug workspace path issue
-          echo "Raw GITHUB_WORKSPACE: '$GITHUB_WORKSPACE'"
-          printf "GITHUB_WORKSPACE bytes: "
-          echo -n "$GITHUB_WORKSPACE" | od -c
-          # Try to fix the path by removing trailing comment chars
-          CLEAN_WORKSPACE=$(echo "$GITHUB_WORKSPACE" | sed 's/#.*$//')
-          echo "Cleaned workspace: '$CLEAN_WORKSPACE'"
-          sudo chown -R "$USER:$USER" "$CLEAN_WORKSPACE"
+          echo "chown -R $USER $GITHUB_WORKSPACE" && sudo chown -R $USER $GITHUB_WORKSPACE
 
       # https://github.com/actions/checkout/issues/1781
       - name: Check out code
