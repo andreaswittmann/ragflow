@@ -15,8 +15,7 @@ on:
       - 'docs/**'
       - '*.md'
       - '*.mdx'
-  schedule:
-    - cron: '0 16 * * *'  # This schedule runs every 16:00:00Z(00:00:00+08:00)
+  workflow_dispatch:
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency
 concurrency:
