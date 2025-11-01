@@ -95,6 +95,10 @@ jobs:
           uv sync --python 3.10
           uv run download_deps.py --china-mirrors
 
+      - name: Set up test environment
+        run: |
+          echo "ZHIPU_AI_API_KEY=dummy_key_for_testing" >> $GITHUB_ENV
+
       - name: Build ragflow:nightly
         run: |
           RUNNER_WORKSPACE_PREFIX=${RUNNER_WORKSPACE_PREFIX:-$HOME}
