@@ -90,6 +90,11 @@ jobs:
           version: ">=0.11.x"
           args: "check"
 
+      - name: Download dependencies
+        run: |
+          uv sync --python 3.10
+          uv run download_deps.py --china-mirrors
+
       - name: Build ragflow:nightly
         run: |
           RUNNER_WORKSPACE_PREFIX=${RUNNER_WORKSPACE_PREFIX:-$HOME}
