@@ -36,7 +36,7 @@ jobs:
       - name: Ensure workspace ownership
         run: |
           echo "Workflow triggered by ${{ github.event_name }}"
-          echo "chown -R $USER $GITHUB_WORKSPACE" && sudo chown -R $USER $GITHUB_WORKSPACE
+          echo "chown -R $USER $GITHUB_WORKSPACE" && sudo -n chown -R $USER $GITHUB_WORKSPACE
 
       # https://github.com/actions/checkout/issues/1781
       - name: Check out code
@@ -104,11 +104,11 @@ jobs:
           RUNNER_WORKSPACE_PREFIX=${RUNNER_WORKSPACE_PREFIX:-$HOME}
           RAGFLOW_IMAGE=infiniflow/ragflow:${GITHUB_RUN_ID}
           echo "RAGFLOW_IMAGE=${RAGFLOW_IMAGE}" >> $GITHUB_ENV
-          sudo docker pull ubuntu:22.04
+          sudo -n docker pull ubuntu:22.04
           # Build multi-platform deps image locally
-          sudo DOCKER_BUILDKIT=1 docker buildx build --platform linux/amd64,linux/arm64 -t infiniflow/ragflow_deps:latest --load -f Dockerfile.deps .
+          sudo -n DOCKER_BUILDKIT=1 docker buildx build --platform linux/amd64,linux/arm64 -t infiniflow/ragflow_deps:latest --load -f Dockerfile.deps .
           # Now build the main image using the local deps
-          sudo DOCKER_BUILDKIT=1 docker build --build-arg NEED_MIRROR=1 -f Dockerfile -t ${RAGFLOW_IMAGE} .
+          sudo -n DOCKER_BUILDKIT=1 docker build --build-arg NEED_MIRROR=1 -f Dockerfile -t ${RAGFLOW_IMAGE} .
           if [[ "$GITHUB_EVENT_NAME" == "schedule" ]]; then
             export HTTP_API_TEST_LEVEL=p3
           else
@@ -167,13 +167,13 @@ jobs:
           echo -e "RAGFLOW_IMAGE=${RAGFLOW_IMAGE}" >> docker/.env
           echo "HOST_ADDRESS=http://host.docker.internal:${SVR_HTTP_PORT}" >> $GITHUB_ENV
 
-          sudo docker compose -f docker/docker-compose.yml -p ${GITHUB_RUN_ID} up -d
+          sudo -n docker compose -f docker/docker-compose.yml -p ${GITHUB_RUN_ID} up -d
           uv sync --python 3.10 --only-group test --no-default-groups --frozen && uv pip install sdk/python
 
       - name: Run sdk tests against Elasticsearch
         run: |
           export http_proxy=""; export https_proxy=""; export no_proxy=""; export HTTP_PROXY=""; export HTTPS_PROXY=""; export NO_PROXY=""
-          until sudo docker exec ${RAGFLOW_CONTAINER} curl -s --connect-timeout 5 ${HOST_ADDRESS} > /dev/null; do
+          until sudo -n docker exec ${RAGFLOW_CONTAINER} curl -s --connect-timeout 5 ${HOST_ADDRESS} > /dev/null; do
             echo "Waiting for service to be available..."
             sleep 5
           done
@@ -182,7 +182,7 @@ jobs:
       - name: Run frontend api tests against Elasticsearch
         run: |
           export http_proxy=""; export https_proxy=""; export no_proxy=""; export HTTP_PROXY=""; export HTTPS_PROXY=""; export NO_PROXY=""
-          until sudo docker exec ${RAGFLOW_CONTAINER} curl -s --connect-timeout 5 ${HOST_ADDRESS} > /dev/null; do
+          until sudo -n docker exec ${RAGFLOW_CONTAINER} curl -s --connect-timeout 5 ${HOST_ADDRESS} > /dev/null; do
             echo "Waiting for service to be available..."
             sleep 5
           done
@@ -200,12 +200,12 @@ jobs:
       - name: Stop ragflow:nightly
         if: always()  # always run this step even if previous steps failed
         run: |
-          sudo docker compose -f docker/docker-compose.yml -p ${GITHUB_RUN_ID} down -v
+          sudo -n docker compose -f docker/docker-compose.yml -p ${GITHUB_RUN_ID} down -v
 
       - name: Start ragflow:nightly
         run: |
           sed -i '1i DOC_ENGINE=infinity' docker/.env
-          sudo docker compose -f docker/docker-compose.yml -p ${GITHUB_RUN_ID} up -d
+          sudo -n docker compose -f docker/docker-compose.yml -p ${GITHUB_RUN_ID} up -d
 
       - name: Run sdk tests against Infinity
         run: |
@@ -237,5 +237,5 @@ jobs:
       - name: Stop ragflow:nightly
         if: always()  # always run this step even if previous steps failed
         run: |
-          sudo docker compose -f docker/docker-compose.yml -p ${GITHUB_RUN_ID} down -v
-          sudo docker rmi -f ${RAGFLOW_IMAGE}
+          sudo -n docker compose -f docker/docker-compose.yml -p ${GITHUB_RUN_ID} down -v
+          sudo -n docker rmi -f ${RAGFLOW_IMAGE}
