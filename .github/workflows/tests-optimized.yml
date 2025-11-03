@@ -14,6 +14,8 @@ jobs:
     # https://docs.github.com/en/actions/using-jobs/using-conditions-to-control-job-execution
     # https://github.com/orgs/community/discussions/26261
     runs-on: [ "self-hosted", "ragflow-test" ]
+    env:
+      ZHIPU_AI_API_KEY: ${{ secrets.ZHIPU_AI_API_KEY }}
     steps:
       # https://github.com/hmarr/debug-action
       #- uses: hmarr/debug-action@v2
