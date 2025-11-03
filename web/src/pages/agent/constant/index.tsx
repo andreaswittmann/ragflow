@@ -617,7 +617,10 @@ export const initialAgentValues = {
       type: 'string',
       value: '',
     },
-    [AgentStructuredOutputField]: {},
+    [AgentStructuredOutputField]: {
+      type: 'Object Array String Number Boolean',
+      value: '',
+    },
   },
 };
 
@@ -800,6 +803,7 @@ export const RestrictedUpstreamMap = {
   [Operator.HierarchicalMerger]: [Operator.Begin],
   [Operator.Tokenizer]: [Operator.Begin],
   [Operator.Extractor]: [Operator.Begin],
+  [Operator.File]: [Operator.Begin],
 };
 
 export const NodeMap = {
@@ -926,3 +930,11 @@ export const HALF_PLACEHOLDER_NODE_HEIGHT =
 export const DROPDOWN_HORIZONTAL_OFFSET = 28;
 export const DROPDOWN_VERTICAL_OFFSET = 74;
 export const PREVENT_CLOSE_DELAY = 300;
+
+export enum JsonSchemaDataType {
+  String = 'string',
+  Number = 'number',
+  Boolean = 'boolean',
+  Array = 'array',
+  Object = 'object',
+}

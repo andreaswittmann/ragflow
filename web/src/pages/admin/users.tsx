@@ -84,7 +84,6 @@ import {
   updateUserPassword,
   updateUserRole,
   updateUserStatus,
-  type AdminService,
 } from '@/services/admin-service';
 
 import {
@@ -126,11 +125,14 @@ function AdminUserManagement() {
   const { data: roleList } = useQuery({
     queryKey: ['admin/listRoles'],
     queryFn: async () => (await listRoles()).data.data.roles,
+    enabled: IS_ENTERPRISE,
+    retry: false,
   });
 
-  const { data: usersList, isPending } = useQuery({
+  const { data: usersList } = useQuery({
     queryKey: ['admin/listUsers'],
     queryFn: async () => (await listUsers()).data.data,
+    retry: false,
   });
 
   // Delete user mutation
@@ -142,17 +144,19 @@ function AdminUserManagement() {
       setDeleteModalOpen(false);
       setUserToMakeAction(null);
     },
+    retry: false,
   });
 
   // Change password mutation
   const changePasswordMutation = useMutation({
     mutationFn: ({ email, password }: { email: string; password: string }) =>
-      updateUserPassword(email, password),
+      updateUserPassword(email, rsaPsw(password) as string),
     onSuccess: () => {
       // message.success(t('admin.passwordChangedSuccessfully'));
       setPasswordModalOpen(false);
       setUserToMakeAction(null);
     },
+    retry: false,
   });
 
   // Update user role mutation
@@ -162,6 +166,7 @@ function AdminUserManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin/listUsers'] });
     },
+    retry: false,
   });
 
   // Create user mutation
@@ -175,7 +180,7 @@ function AdminUserManagement() {
       password: string;
       role?: string;
     }) => {
-      await createUser(email, password);
+      await createUser(email, rsaPsw(password) as string);
 
       if (IS_ENTERPRISE && role) {
         await updateUserRoleMutation.mutateAsync({ email, role });
@@ -187,6 +192,7 @@ function AdminUserManagement() {
       setCreateUserModalOpen(false);
       createUserForm.form.reset();
     },
+    retry: false,
   });
 
   // Update user status mutation
@@ -196,6 +202,7 @@ function AdminUserManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin/listUsers'] });
     },
+    retry: false,
   });
 
   const columnDefs = useMemo(
@@ -333,13 +340,7 @@ function AdminUserManagement() {
         ),
       }),
     ],
-    [
-      roleList,
-      t,
-      navigate,
-      updateUserStatusMutation.isPending,
-      updateUserRoleMutation.isPending,
-    ],
+    [t, updateUserRoleMutation, roleList, updateUserStatusMutation, navigate],
   );
 
   const table = useReactTable({
@@ -356,7 +357,7 @@ function AdminUserManagement() {
 
   return (
     <>
-      <Card className="h-full border border-border-button bg-transparent rounded-xl overflow-x-hidden overflow-y-auto">
+      <Card className="!shadow-none h-full border border-border-button bg-transparent rounded-xl overflow-x-hidden overflow-y-auto">
         <ScrollArea className="size-full">
           <CardHeader className="space-y-0 flex flex-row justify-between items-center">
             <CardTitle>{t('admin.userManagement')}</CardTitle>
@@ -573,7 +574,8 @@ function AdminUserManagement() {
               className="px-4 h-10"
               variant="destructive"
               onClick={() =>
-                deleteUserMutation.mutate(userToMakeAction?.email || '')
+                userToMakeAction &&
+                deleteUserMutation.mutate(userToMakeAction?.email)
               }
               disabled={deleteUserMutation.isPending}
               loading={deleteUserMutation.isPending}
@@ -586,7 +588,14 @@ function AdminUserManagement() {
 
       {/* Change Password Modal */}
       <Dialog open={passwordModalOpen} onOpenChange={setPasswordModalOpen}>
-        <DialogContent className="p-0 border-border-button">
+        <DialogContent
+          className="p-0 border-border-button"
+          onAnimationEnd={() => {
+            if (!passwordModalOpen) {
+              changePasswordForm.form.reset();
+            }
+          }}
+        >
           <DialogHeader className="p-6 border-b border-border-button">
             <DialogTitle>{t('admin.changePassword')}</DialogTitle>
           </DialogHeader>
@@ -599,7 +608,7 @@ function AdminUserManagement() {
                 if (userToMakeAction) {
                   changePasswordMutation.mutate({
                     email: userToMakeAction.email,
-                    password: rsaPsw(newPassword) as string,
+                    password: newPassword,
                   });
                 }
               }}
@@ -649,12 +658,7 @@ function AdminUserManagement() {
           <section className="px-12 py-4">
             <createUserForm.FormComponent
               id={createUserForm.id}
-              onSubmit={({ email, password }) => {
-                createUserMutation.mutate({
-                  email: email,
-                  password: rsaPsw(password) as string,
-                });
-              }}
+              onSubmit={createUserMutation.mutate}
             />
           </section>
 
