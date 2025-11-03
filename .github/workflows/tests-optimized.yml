@@ -152,6 +152,13 @@ jobs:
 
       - name: Start ragflow:nightly
         run: |
+          # Ensure completely clean environment before second run
+          echo "Cleaning up any previous containers and volumes..."
+          sudo docker compose -f docker/docker-compose.yml -p ${GITHUB_RUN_ID} down -v || true
+          sudo docker volume prune -f
+          sudo docker network prune -f
+          
+          # Reset configuration and start fresh
           sed -i '1i DOC_ENGINE=infinity' docker/.env
           sudo docker compose -f docker/docker-compose.yml -p ${GITHUB_RUN_ID} up -d
 
@@ -186,6 +193,9 @@ jobs:
         if: always()  # always run this step even if previous steps failed
         run: |
           sudo docker compose -f docker/docker-compose.yml -p ${GITHUB_RUN_ID} down -v
+          # Clean up ALL volumes and networks to prevent residue from affecting next run
+          sudo docker volume prune -f
+          sudo docker network prune -f
           sudo docker rmi -f ${RAGFLOW_IMAGE}
 
       - name: Docker cache cleanup (optional)
