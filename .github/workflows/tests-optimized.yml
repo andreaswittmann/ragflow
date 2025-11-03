@@ -37,39 +37,31 @@ jobs:
           version: ">=0.11.x"
           args: "check"
 
-      - name: Build ragflow:nightly (Optimized with Local Cache)
+      - name: Build ragflow:nightly (Simplified with Built-in Cache)
         run: |
           RUNNER_WORKSPACE_PREFIX=${RUNNER_WORKSPACE_PREFIX:-$HOME}
           RAGFLOW_IMAGE=infiniflow/ragflow:${GITHUB_RUN_ID}
           echo "RAGFLOW_IMAGE=${RAGFLOW_IMAGE}" >> $GITHUB_ENV
           
-          # Set up local Docker BuildKit cache directory
+          # Enable Docker BuildKit for automatic layer caching
           export DOCKER_BUILDKIT=1
-          export BUILDX_CACHE_DIR="${RUNNER_WORKSPACE_PREFIX}/docker-buildx-cache"
           
-          # Create cache directory if it doesn't exist
-          mkdir -p "${BUILDX_CACHE_DIR}"
-          
-          # Pull base image and cache it
+          # Pull base image
           echo "Pulling base image ubuntu:22.04..."
           sudo docker pull ubuntu:22.04
           
-          # Build with local Docker BuildKit caching
-          echo "Building Docker image with local layer caching..."
+          # Build with Docker BuildKit (uses built-in layer caching)
+          echo "Building Docker image with BuildKit layer caching..."
           sudo docker build \
             --build-arg NEED_MIRROR=1 \
-            --cache-from type=inline \
-            --cache-to type=inline \
             -f Dockerfile -t ${RAGFLOW_IMAGE} .
           
-          # Standard test level configuration (no scheduled runs)
+          # Standard test level configuration
           export HTTP_API_TEST_LEVEL=p2
           echo "HTTP_API_TEST_LEVEL=${HTTP_API_TEST_LEVEL}" >> $GITHUB_ENV
           echo "RAGFLOW_CONTAINER=${GITHUB_RUN_ID}-ragflow-cpu-1" >> $GITHUB_ENV
           
-          # Cache status info
-          echo "Cache directory: ${BUILDX_CACHE_DIR}"
-          echo "Cache size: $(du -sh ${BUILDX_CACHE_DIR} 2>/dev/null | cut -f1 || echo 'N/A')"
+          echo "Build completed successfully with Docker layer caching enabled"
 
       - name: Start ragflow:nightly
         run: |
@@ -194,14 +186,15 @@ jobs:
           sudo docker compose -f docker/docker-compose.yml -p ${GITHUB_RUN_ID} down -v
           sudo docker rmi -f ${RAGFLOW_IMAGE}
 
-      - name: Cache cleanup (optional)
+      - name: Docker cache cleanup (optional)
         if: github.event_name == 'workflow_dispatch'
         run: |
-          echo "Manual cache cleanup requested..."
-          if [[ -d "${BUILDX_CACHE_DIR:-/tmp/docker-buildx-cache}" ]]; then
-            echo "Cache size before cleanup: $(du -sh ${BUILDX_CACHE_DIR:-/tmp/docker-buildx-cache})"
-            sudo rm -rf ${BUILDX_CACHE_DIR:-/tmp/docker-buildx-cache}
-            echo "Docker BuildKit cache cleaned up"
-          else
-            echo "No cache directory found to clean up"
-          fi
+          echo "Docker system cleanup requested..."
+          echo "Current Docker disk usage:"
+          docker system df
+          echo ""
+          echo "Cleaning up Docker build cache and unused resources..."
+          sudo docker builder prune --all --force
+          echo "Docker system cleanup completed"
+          echo "Docker disk usage after cleanup:"
+          docker system df
