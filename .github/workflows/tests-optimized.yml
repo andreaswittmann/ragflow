@@ -113,7 +113,12 @@ jobs:
           echo -e "COMPOSE_PROFILES=\${COMPOSE_PROFILES},tei-cpu" >> docker/.env
           echo -e "TEI_MODEL=BAAI/bge-small-en-v1.5" >> docker/.env
           echo -e "RAGFLOW_IMAGE=${RAGFLOW_IMAGE}" >> docker/.env
-          echo "HOST_ADDRESS=http://host.docker.internal:${SVR_HTTP_PORT}" >> $GITHUB_ENV
+          
+          # Dynamically detect host IP to resolve host.docker.internal DNS issue
+          HOST_IP=$(ip route get 1.1.1.1 | awk '{print $7; exit}')
+          echo "Detected host IP: ${HOST_IP}"
+          echo "HOST_ADDRESS=http://${HOST_IP}:${SVR_HTTP_PORT}" >> $GITHUB_ENV
+          echo "HOST_IP=${HOST_IP}" >> $GITHUB_ENV
 
           sudo docker compose -f docker/docker-compose.yml -p ${GITHUB_RUN_ID} up -d
           uv sync --python 3.10 --only-group test --no-default-groups --frozen && uv pip install sdk/python
