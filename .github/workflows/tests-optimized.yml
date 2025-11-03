@@ -54,12 +54,12 @@ jobs:
           echo "Pulling base image ubuntu:22.04..."
           sudo docker pull ubuntu:22.04
           
-          # Build with enhanced local caching
+          # Build with local Docker BuildKit caching
           echo "Building Docker image with local layer caching..."
           sudo docker build \
             --build-arg NEED_MIRROR=1 \
-            --cache-from type=local,src="${BUILDX_CACHE_DIR}" \
-            --cache-to type=local,dest="${BUILDX_CACHE_DIR},mode=max" \
+            --cache-from type=inline \
+            --cache-to type=inline \
             -f Dockerfile -t ${RAGFLOW_IMAGE} .
           
           # Standard test level configuration (no scheduled runs)
