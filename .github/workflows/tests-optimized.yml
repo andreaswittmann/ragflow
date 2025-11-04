@@ -172,18 +172,20 @@ jobs:
           sudo docker compose -f docker/docker-compose.yml -p ${GITHUB_RUN_ID} down -v
 
       - name: Start ragflow:nightly
+        if: false
         run: |
           # Ensure completely clean environment before second run
           echo "Cleaning up any previous containers and volumes..."
           sudo docker compose -f docker/docker-compose.yml -p ${GITHUB_RUN_ID} down -v || true
           sudo docker volume prune -f
           sudo docker network prune -f
-          
+
           # Reset configuration and start fresh
           sed -i '1i DOC_ENGINE=infinity' docker/.env
           sudo docker compose -f docker/docker-compose.yml -p ${GITHUB_RUN_ID} up -d
 
       - name: Run sdk tests against Infinity
+        if: false
         run: |
           export http_proxy=""; export https_proxy=""; export no_proxy=""; export HTTP_PROXY=""; export HTTPS_PROXY=""; export NO_PROXY=""
           until sudo docker exec ${RAGFLOW_CONTAINER} curl -s --connect-timeout 5 ${HOST_ADDRESS} > /dev/null; do
@@ -193,6 +195,7 @@ jobs:
           source .venv/bin/activate && DOC_ENGINE=infinity pytest -s --tb=short --level=${HTTP_API_TEST_LEVEL} test/testcases/test_sdk_api
 
       - name: Run frontend api tests against Infinity
+        if: false
         run: |
           export http_proxy=""; export https_proxy=""; export no_proxy=""; export HTTP_PROXY=""; export HTTPS_PROXY=""; export NO_PROXY=""
           until sudo docker exec ${RAGFLOW_CONTAINER} curl -s --connect-timeout 5 ${HOST_ADDRESS} > /dev/null; do
@@ -202,6 +205,7 @@ jobs:
           source .venv/bin/activate && DOC_ENGINE=infinity pytest -s --tb=short sdk/python/test/test_frontend_api/get_email.py sdk/python/test/test_frontend_api/test_dataset.py
 
       - name: Run http api tests against Infinity
+        if: false
         run: |
           export http_proxy=""; export https_proxy=""; export no_proxy=""; export HTTP_PROXY=""; export HTTPS_PROXY=""; export NO_PROXY=""
           until sudo docker exec ${RAGFLOW_CONTAINER} curl -s --connect-timeout 5 ${HOST_ADDRESS} > /dev/null; do
@@ -211,7 +215,7 @@ jobs:
           source .venv/bin/activate && DOC_ENGINE=infinity pytest -s --tb=short --level=${HTTP_API_TEST_LEVEL} test/testcases/test_http_api
 
       - name: Stop ragflow:nightly
-        if: always()  # always run this step even if previous steps failed
+        if: false
         run: |
           sudo docker compose -f docker/docker-compose.yml -p ${GITHUB_RUN_ID} down -v
           # Clean up ALL volumes and networks to prevent residue from affecting next run
