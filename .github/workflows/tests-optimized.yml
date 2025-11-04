@@ -32,12 +32,33 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
+      - name: Debug ZHIPU_AI_API_KEY
+        run: |
+          if [ -z "$ZHIPU_AI_API_KEY" ]; then
+            echo "ZHIPU_AI_API_KEY is not set or empty"
+            exit 1
+          else
+            echo "ZHIPU_AI_API_KEY is set (length: ${#ZHIPU_AI_API_KEY})"
+            if [[ "$ZHIPU_AI_API_KEY" == *","* ]]; then
+              echo "Key contains comma, likely in correct format"
+            else
+              echo "Key does not contain comma"
+            fi
+          fi
+
       # https://github.com/astral-sh/ruff-action
       - name: Static check with Ruff
         uses: astral-sh/ruff-action@v3
         with:
           version: ">=0.11.x"
           args: "check"
+
+      - name: Verify ZHIPU AI API key parsing fix
+        run: |
+          echo "Verifying ZHIPU AI API key parsing fix..."
+          uv sync --python 3.10 --only-group test --no-default-groups --frozen
+          source .venv/bin/activate
+          python scripts/verify_api_key_fix.py
 
       - name: Build ragflow:nightly (Simplified with Built-in Cache)
         run: |
