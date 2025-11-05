@@ -172,7 +172,7 @@ jobs:
           sudo docker compose -f docker/docker-compose.yml -p ${GITHUB_RUN_ID} down -v
 
       - name: Start ragflow:nightly
-        if: false
+        if: true
         run: |
           # Ensure completely clean environment before second run
           echo "Cleaning up any previous containers and volumes..."
@@ -185,7 +185,7 @@ jobs:
           sudo docker compose -f docker/docker-compose.yml -p ${GITHUB_RUN_ID} up -d
 
       - name: Run sdk tests against Infinity
-        if: false
+        if: true
         run: |
           export http_proxy=""; export https_proxy=""; export no_proxy=""; export HTTP_PROXY=""; export HTTPS_PROXY=""; export NO_PROXY=""
           until sudo docker exec ${RAGFLOW_CONTAINER} curl -s --connect-timeout 5 ${HOST_ADDRESS} > /dev/null; do
@@ -195,7 +195,7 @@ jobs:
           source .venv/bin/activate && DOC_ENGINE=infinity pytest -s --tb=short --level=${HTTP_API_TEST_LEVEL} test/testcases/test_sdk_api
 
       - name: Run frontend api tests against Infinity
-        if: false
+        if: true
         run: |
           export http_proxy=""; export https_proxy=""; export no_proxy=""; export HTTP_PROXY=""; export HTTPS_PROXY=""; export NO_PROXY=""
           until sudo docker exec ${RAGFLOW_CONTAINER} curl -s --connect-timeout 5 ${HOST_ADDRESS} > /dev/null; do
@@ -205,7 +205,7 @@ jobs:
           source .venv/bin/activate && DOC_ENGINE=infinity pytest -s --tb=short sdk/python/test/test_frontend_api/get_email.py sdk/python/test/test_frontend_api/test_dataset.py
 
       - name: Run http api tests against Infinity
-        if: false
+        if: true
         run: |
           export http_proxy=""; export https_proxy=""; export no_proxy=""; export HTTP_PROXY=""; export HTTPS_PROXY=""; export NO_PROXY=""
           until sudo docker exec ${RAGFLOW_CONTAINER} curl -s --connect-timeout 5 ${HOST_ADDRESS} > /dev/null; do
@@ -215,7 +215,7 @@ jobs:
           source .venv/bin/activate && DOC_ENGINE=infinity pytest -s --tb=short --level=${HTTP_API_TEST_LEVEL} test/testcases/test_http_api
 
       - name: Stop ragflow:nightly
-        if: false
+        if: true
         run: |
           sudo docker compose -f docker/docker-compose.yml -p ${GITHUB_RUN_ID} down -v
           # Clean up ALL volumes and networks to prevent residue from affecting next run
@@ -224,7 +224,7 @@ jobs:
           sudo docker rmi -f ${RAGFLOW_IMAGE}
 
       - name: Docker cache cleanup (optional)
-        if: github.event_name == 'workflow_dispatch'
+        if: false
         run: |
           echo "Docker system cleanup requested..."
           echo "Current Docker disk usage:"
